@@ -3,6 +3,7 @@ import time
 
 from ai_robot.config import load_settings
 from ai_robot.conversation_ai import ConversationAI
+from ai_robot.data_logger import DataLogger
 from ai_robot.robot_controller import RobotController
 from ai_robot.speech_recognition import WhisperSpeechRecognizer
 from ai_robot.tts import TextToSpeech
@@ -47,6 +48,7 @@ def run() -> None:
         model=settings.groq_model,
         system_prompt=settings.system_prompt,
     )
+    logger = DataLogger()
 
     detector = None
     robot = None
@@ -73,6 +75,15 @@ def run() -> None:
         while True:
             if args.stage >= 2 and detector is not None:
                 wait_for_person(detector, preview=not args.no_preview)
+
+            # Log person detection
+            if detector is not None:
+                result = detector.detect_once(show_preview=False)
+                logger.log_detection(
+                    person_detected=result.person_detected,
+                    confidence=result.confidence,
+                    location="demo_room"
+                )
 
             if not greeted:
                 greeting = "Hello! I am RoboBuddy. Nice to meet you."
@@ -110,6 +121,14 @@ def run() -> None:
                 ai_text = f"I am having trouble reaching the AI service right now. {exc}"
 
             print(f"[AI] {ai_text}")
+            
+            # Log conversation
+            logger.log_conversation(
+                user_input=user_text,
+                ai_response=ai_text,
+                model_used=settings.groq_model,
+                person_present=(detector is not None and result.person_detected) if args.stage >= 2 else None
+            )
 
             if robot is not None:
                 robot.speaking_motion()
