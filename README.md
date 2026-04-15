@@ -43,6 +43,125 @@ This project addresses the need for a more human-like, interactive, and accessib
 
 ---
 
+## 🧱 Software Structure
+
+```text
+Robobuddy/
+├── ai_robot/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── vision.py
+│   ├── speech_recognition.py
+│   ├── conversation_ai.py
+│   ├── tts.py
+│   ├── robot_controller.py
+│   └── config.py
+├── main.py
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## 🚀 Stage-by-Stage Development
+
+1. Stage 1: Talking AI only (Whisper -> Groq -> TTS)
+2. Stage 2: Add YOLO person detection + greeting trigger
+3. Stage 3: Add Raspberry Pi servo movement commands via socket
+4. Stage 4: Full cycle improvements (re-greeting per detection cycle)
+
+---
+
+## 🧪 Setup (Windows)
+
+1. Create and activate a virtual environment
+2. Install dependencies
+3. Set environment variables
+4. Run the desired stage
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Environment variables (PowerShell example):
+
+```powershell
+$env:GROQ_API_KEY="your_key_here"
+$env:GROQ_MODEL="llama-3.1-8b-instant"
+$env:WHISPER_MODEL="base"
+$env:ROBOT_HOST="192.168.1.50"
+$env:ROBOT_PORT="5000"
+```
+
+Run commands:
+
+```powershell
+# Stage 1: talking AI only
+python main.py --stage 1
+
+# Stage 2: add person detection
+python main.py --stage 2
+
+# Stage 3: add movement socket commands
+python main.py --stage 3
+
+# Stage 4: full loop with repeated detection cycle
+python main.py --stage 4
+```
+
+Optional flag:
+
+```powershell
+python main.py --stage 2 --no-preview
+```
+
+---
+
+## 🔌 Raspberry Pi Socket Command Contract
+
+Your Raspberry Pi server should listen for newline-separated commands:
+
+* `HEAD_LEFT`
+* `HEAD_RIGHT`
+* `WAVE_ARM`
+* `SPEAK_START`
+* `SPEAK_END`
+
+These are sent by `robot_controller.py`.
+
+---
+
+## 🧰 Suggested Hardware (For Your Technopreneurship Demo)
+
+Essential:
+
+* Raspberry Pi 4 (4GB or 8GB)
+* PCA9685 servo driver
+* 2 to 4 micro servo motors (SG90/MG90S)
+* 5V external power supply for servos
+* USB webcam (720p is enough for demo)
+* USB microphone
+* USB or 3.5mm speaker
+* Breadboard + jumper wires
+
+Recommended build extras:
+
+* Pan-tilt bracket for head movement
+* Lightweight acrylic/chassis frame
+* Power bank or UPS hat for portability
+
+---
+
+## ⚠️ Notes
+
+* `openai-whisper` may require FFmpeg installed in your system path.
+* First YOLO run downloads model weights (`yolov8n.pt`) automatically.
+* First Whisper run downloads the selected model (`base`, `small`, etc.).
+
+---
+
 ## 🔄 System Flow
 
 1. Camera detects a person using YOLOv8
