@@ -7,3 +7,7 @@ requests
 groq
 openai-whisper
 python-dotenv
+
+# Raspberry Pi servo control (optional, install on Pi only)
+# adafruit-circuitpython-pca9685
+# adafruit-circuitpython-busdevice
