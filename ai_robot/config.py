@@ -32,3 +32,14 @@ class Settings:
 def load_settings() -> Settings:
     """Return settings loaded from the current environment."""
     return Settings()
+
+
+# Data storage paths (laptop-side for logging detection + conversation history)
+DATA_DIR = os.getenv("ROBOBUDDY_DATA_DIR", "./robobuddy_data")
+DETECTION_LOG_DIR = os.path.join(DATA_DIR, "detections")
+CONVERSATION_LOG_DIR = os.path.join(DATA_DIR, "conversations")
+MODEL_CACHE_DIR = os.path.join(DATA_DIR, "models")
+
+# Ensure directories exist
+for dir_path in [DATA_DIR, DETECTION_LOG_DIR, CONVERSATION_LOG_DIR, MODEL_CACHE_DIR]:
+    os.makedirs(dir_path, exist_ok=True)
