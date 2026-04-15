@@ -4,3 +4,6 @@ speechrecognition
 pyttsx3
 pyaudio
 requests
+groq
+openai-whisper
+python-dotenv
