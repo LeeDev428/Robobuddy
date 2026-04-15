@@ -154,11 +154,140 @@ Recommended build extras:
 
 ---
 
+## 📚 Documentation
+
+### For Building the Robot:
+- **[HARDWARE_BOM.md](HARDWARE_BOM.md)** — Complete bill of materials, storage strategy, cost breakdown, and 3D printing recommendations
+- **[PI_SETUP_GUIDE.md](PI_SETUP_GUIDE.md)** — Step-by-step Raspberry Pi setup, servo wiring, and troubleshooting
+
+### For Development:
+- **[.env.example](.env.example)** — Environment variable template (copy to `.env` and fill in your values)
+
+---
+
+## 🧠 Laptop (AI Processing) Quick Start
+
+### 1. Install Python Dependencies
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### 2. Download YOLO + Whisper Models
+
+```bash
+# First run will auto-download (~400 MB total)
+python main.py --stage 1
+# Say something like "Hello" and exit
+```
+
+### 3. Configure Environment Variables
+
+Copy `.env.example` to `.env` and fill in:
+```powershell
+$env:GROQ_API_KEY="your_groq_api_key_here"
+$env:GROQ_MODEL="llama-3.1-8b-instant"
+$env:WHISPER_MODEL="base"
+$env:ROBOT_HOST="192.168.1.50"  # Your Pi's IP
+```
+
+Or save as `.env` file:
+```bash
+pip install python-dotenv
+# .env will auto-load on startup
+```
+
+---
+
+## 🤖 Raspberry Pi (Robot Controller) Quick Start
+
+See **[PI_SETUP_GUIDE.md](PI_SETUP_GUIDE.md)** for detailed instructions. Quick steps:
+
+1. Flash Raspberry Pi OS (64-bit Lite)
+2. SSH: `ssh pi@robobuddy.local`
+3. Install dependencies and clone repo
+4. Wire PCA9685 servo driver to GPIO (I2C)
+5. Run servo server: `python3 pi_servo_server.py`
+6. Verify: `i2cdetect -y 1` shows "40"
+
+---
+
+## 🔄 End-to-End Demo Flow
+
+### Stage 1: Talking AI (No Hardware)
+```powershell
+# Test that Groq API + speech works
+python main.py --stage 1
+
+# Say: "What's the weather?"
+# Robot responds with AI-generated text-to-speech
+```
+
+### Stage 2: Add Person Detection
+```powershell
+python main.py --stage 2
+
+# Requires a person in front of camera
+# Shows OpenCV preview window with detection box
+```
+
+### Stage 3: Add Servo Movement
+```powershell
+# Ensure Raspberry Pi servo server is running:
+# ssh pi@robobuddy.local
+# python3 pi_servo_server.py
+
+# On laptop:
+python main.py --stage 3
+
+# Person detected → greets + waves arm
+# During AI response → head motion
+```
+
+### Stage 4: Full Closed Loop
+```powershell
+python main.py --stage 4
+
+# Re-detects person for every interaction cycle
+# More realistic demo behavior
+```
+
+---
+
+## 💾 Data Logging (ML Training Ready)
+
+All detection and conversation data is automatically logged to `./robobuddy_data/`:
+
+```
+robobuddy_data/
+├── detections/
+│   └── detections_2026-04-15.jsonl
+├── conversations/
+│   └── conversations_2026-04-15.jsonl
+└── models/
+    ├── yolov8n.pt
+    └── (future: yolov8n_face.pt for face recognition)
+```
+
+Each log file is JSONL format (one JSON object per line) for easy processing:
+```json
+{"timestamp": "2026-04-15T10:30:45.123Z", "person_detected": true, "confidence": 0.87, "location": "demo_room"}
+{"timestamp": "2026-04-15T10:31:02.456Z", "user_input": "Hi", "ai_response": "Hello!", "model_used": "llama-3.1-8b-instant", "person_detected": true}
+```
+
+**Use case:** Train a custom face recognition model on your detection history (future phase).
+
+---
+
 ## ⚠️ Notes
 
 * `openai-whisper` may require FFmpeg installed in your system path.
-* First YOLO run downloads model weights (`yolov8n.pt`) automatically.
-* First Whisper run downloads the selected model (`base`, `small`, etc.).
+* First YOLO run downloads model weights (`yolov8n.pt`) automatically (~80 MB).
+* First Whisper run downloads the selected model (`base` ~140 MB, `small` ~500 MB).
+* All ML inference (YOLO, Whisper) runs on your laptop GPU (GTX 1650). Raspberry Pi only handles servo control.
+* Socket communication is WiFi-based. For demos, ensure Pi and laptop are on the same network.
 
 ---
 
