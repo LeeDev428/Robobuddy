@@ -1,4 +1,5 @@
 import argparse
+import threading
 import time
 
 from ai_robot.config import load_settings
@@ -35,6 +36,44 @@ def wait_for_person(detector: PersonDetector, preview: bool) -> None:
             print(f"[VISION] Person detected (confidence={result.confidence:.2f})")
             return
         time.sleep(0.35)
+
+
+def speak_interruptible(tts: TextToSpeech, stt: WhisperSpeechRecognizer, text: str, settings) -> str | None:
+    """Speak text while listening for user interruption.
+    Returns the interruption transcript if the user spoke, else None.
+    Works best with headphones (avoids mic picking up speaker output).
+    """
+    interrupted_text: list[str | None] = [None]
+    tts_done = threading.Event()
+
+    def _speak() -> None:
+        tts.speak(text)
+        tts_done.set()
+
+    def _listen_for_interrupt() -> None:
+        time.sleep(0.7)  # Brief pause so TTS starts before we listen
+        if tts_done.is_set():
+            return
+        try:
+            result = stt.listen_and_transcribe(
+                timeout_sec=settings.listen_timeout_sec,
+                phrase_time_limit_sec=settings.phrase_time_limit_sec,
+            )
+            if result and not tts_done.is_set():
+                interrupted_text[0] = result
+                tts.stop()
+        except Exception:
+            pass
+
+    t_speak = threading.Thread(target=_speak, daemon=True)
+    t_listen = threading.Thread(target=_listen_for_interrupt, daemon=True)
+    t_speak.start()
+    t_listen.start()
+    t_speak.join(timeout=120)
+    tts_done.set()
+    t_listen.join(timeout=settings.phrase_time_limit_sec + 3)
+
+    return interrupted_text[0]
 
 
 def run() -> None:
