@@ -33,6 +33,7 @@ class Settings:
 
     tts_rate: int = int(os.getenv("TTS_RATE", "170"))
     tts_volume: float = float(os.getenv("TTS_VOLUME", "1.0"))
+    tts_voice: str = os.getenv("TTS_VOICE", "en-US-GuyNeural")
 
 
 def load_settings() -> Settings:
