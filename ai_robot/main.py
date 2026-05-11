@@ -53,19 +53,21 @@ def speak_interruptible(tts: TextToSpeech, stt: WhisperSpeechRecognizer, text: s
             tts_done.set()
 
     def _listen_for_interrupt() -> None:
-        time.sleep(0.7)  # Brief pause so TTS starts before we listen
-        if tts_done.is_set():
-            return
-        try:
-            result = stt.listen_and_transcribe(
-                timeout_sec=settings.listen_timeout_sec,
-                phrase_time_limit_sec=settings.phrase_time_limit_sec,
-            )
-            if result and not tts_done.is_set():
-                interrupted_text[0] = result
-                tts.stop()
-        except Exception:
-            pass
+        time.sleep(0.6)  # Brief pause so TTS starts before we listen
+        # Keep each listen window short so this thread always exits quickly.
+        while not tts_done.is_set():
+            try:
+                result = stt.listen_and_transcribe(
+                    timeout_sec=1,
+                    phrase_time_limit_sec=2,
+                )
+                if result and not tts_done.is_set():
+                    interrupted_text[0] = result
+                    tts.stop()
+                    break
+            except Exception:
+                # Ignore transient mic/whisper errors in the interrupt channel.
+                continue
 
     t_speak = threading.Thread(target=_speak, daemon=True)
     t_listen = threading.Thread(target=_listen_for_interrupt, daemon=True)
@@ -80,7 +82,7 @@ def speak_interruptible(tts: TextToSpeech, stt: WhisperSpeechRecognizer, text: s
             break
 
     tts_done.set()
-    t_listen.join(timeout=1.0)
+    t_listen.join()
 
     return interrupted_text[0]
 
