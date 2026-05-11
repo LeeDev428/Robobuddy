@@ -16,6 +16,7 @@ class WhisperSpeechRecognizer:
         self._recognizer.non_speaking_duration = 0.5
         self._recognizer.phrase_threshold = 0.2
         self._model = whisper.load_model(model_name)
+        self._calibrated = False
 
     @staticmethod
     def _is_valid_text(text: str) -> bool:
@@ -39,8 +40,11 @@ class WhisperSpeechRecognizer:
         phrase_time_limit_sec: int = 10,
     ) -> str | None:
         with sr.Microphone() as source:
-            self._recognizer.adjust_for_ambient_noise(source, duration=0.6)
-            self._recognizer.energy_threshold = max(380, self._recognizer.energy_threshold * 1.5)
+            if not self._calibrated:
+                # Calibrate only once for faster turn-by-turn responsiveness.
+                self._recognizer.adjust_for_ambient_noise(source, duration=0.6)
+                self._calibrated = True
+            self._recognizer.energy_threshold = max(260, self._recognizer.energy_threshold * 1.15)
             audio = self._recognizer.listen(
                 source,
                 timeout=timeout_sec,
@@ -49,7 +53,7 @@ class WhisperSpeechRecognizer:
 
         # Fast pre-filter to drop low-volume ambient noise before Whisper.
         raw_pcm = audio.get_raw_data(convert_rate=16000, convert_width=2)
-        if audioop.rms(raw_pcm, 2) < 120:
+        if audioop.rms(raw_pcm, 2) < 85:
             return None
 
         wav_bytes = audio.get_wav_data(convert_rate=16000, convert_width=2)
@@ -64,19 +68,19 @@ class WhisperSpeechRecognizer:
                 fp16=False,
                 temperature=0.0,
                 condition_on_previous_text=False,
-                no_speech_threshold=0.82,
+                no_speech_threshold=0.65,
             )
 
             segments = result.get("segments") or []
             if segments:
-                all_silent = all(float(seg.get("no_speech_prob", 0.0)) > 0.8 for seg in segments)
+                all_silent = all(float(seg.get("no_speech_prob", 0.0)) > 0.7 for seg in segments)
                 if all_silent:
                     return None
 
                 mean_logprob = sum(float(seg.get("avg_logprob", -1.0)) for seg in segments) / len(segments)
                 raw_text = (result.get("text") or "").strip()
                 compression_ratio = max(float(seg.get("compression_ratio", 1.0)) for seg in segments)
-                if mean_logprob < -0.9 and len(raw_text) < 12:
+                if mean_logprob < -1.1 and len(raw_text) < 8:
                     return None
                 if compression_ratio > 2.4:
                     return None
