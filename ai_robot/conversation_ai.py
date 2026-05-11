@@ -4,10 +4,9 @@ from groq import Groq
 
 
 PREFERRED_GROQ_MODELS = [
-    "deepseek-r1-distill-llama-70b",
+    "llama-3.3-70b-versatile",
     "llama-4-maverick-17b-128e-instruct",
     "llama-4-scout-17b-16e-instruct",
-    "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
 ]
 
@@ -51,7 +50,7 @@ class ConversationAI:
                 lower = model_id.lower()
                 value = 0
                 if "r1" in lower or "reason" in lower:
-                    value += 500
+                    value += 150
                 if "405b" in lower:
                     value += 450
                 if "70b" in lower:
@@ -81,7 +80,7 @@ class ConversationAI:
             model=self._model,
             messages=self._messages,
             temperature=0.0,
-            max_tokens=220,
+            max_tokens=140,
         )
 
         ai_text = response.choices[0].message.content or "I am here with you."
