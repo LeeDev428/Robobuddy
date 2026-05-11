@@ -47,8 +47,10 @@ def speak_interruptible(tts: TextToSpeech, stt: WhisperSpeechRecognizer, text: s
     tts_done = threading.Event()
 
     def _speak() -> None:
-        tts.speak(text)
-        tts_done.set()
+        try:
+            tts.speak(text)
+        finally:
+            tts_done.set()
 
     def _listen_for_interrupt() -> None:
         time.sleep(0.7)  # Brief pause so TTS starts before we listen
@@ -69,9 +71,16 @@ def speak_interruptible(tts: TextToSpeech, stt: WhisperSpeechRecognizer, text: s
     t_listen = threading.Thread(target=_listen_for_interrupt, daemon=True)
     t_speak.start()
     t_listen.start()
-    t_speak.join(timeout=120)
+
+    max_speak_sec = max(8.0, min(45.0, (len(text) / 14.0) * 1.2 + 3.0))
+    deadline = time.monotonic() + max_speak_sec
+    while not tts_done.wait(timeout=0.1):
+        if time.monotonic() >= deadline:
+            tts.stop()
+            break
+
     tts_done.set()
-    t_listen.join(timeout=settings.phrase_time_limit_sec + 3)
+    t_listen.join(timeout=1.0)
 
     return interrupted_text[0]
 
@@ -107,6 +116,7 @@ def run() -> None:
         )
 
     print(f"[BOOT] RoboBuddy started in stage {args.stage}")
+    print(f"[AI] Using Groq model: {ai.model}")
     print("[TIP] Say 'exit' or 'quit' to stop.")
 
     greeted = False
