@@ -19,8 +19,8 @@ class Settings:
     )
 
     whisper_model: str = os.getenv("WHISPER_MODEL", "small.en")
-    listen_timeout_sec: int = int(os.getenv("LISTEN_TIMEOUT_SEC", "6"))
-    phrase_time_limit_sec: int = int(os.getenv("PHRASE_TIME_LIMIT_SEC", "10"))
+    listen_timeout_sec: int = int(os.getenv("LISTEN_TIMEOUT_SEC", "8"))
+    phrase_time_limit_sec: int = int(os.getenv("PHRASE_TIME_LIMIT_SEC", "16"))
 
     yolo_model: str = os.getenv("YOLO_MODEL", "yolov8n.pt")
     camera_index: int = int(os.getenv("CAMERA_INDEX", "0"))
