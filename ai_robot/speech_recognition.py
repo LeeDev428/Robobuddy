@@ -1,5 +1,6 @@
 import tempfile
 import os
+import audioop
 
 import speech_recognition as sr
 import whisper
@@ -11,8 +12,8 @@ class WhisperSpeechRecognizer:
     def __init__(self, model_name: str = "base") -> None:
         self._recognizer = sr.Recognizer()
         self._recognizer.dynamic_energy_threshold = True
-        self._recognizer.pause_threshold = 0.6
-        self._recognizer.non_speaking_duration = 0.35
+        self._recognizer.pause_threshold = 1.0
+        self._recognizer.non_speaking_duration = 0.5
         self._recognizer.phrase_threshold = 0.2
         self._model = whisper.load_model(model_name)
 
@@ -39,12 +40,17 @@ class WhisperSpeechRecognizer:
     ) -> str | None:
         with sr.Microphone() as source:
             self._recognizer.adjust_for_ambient_noise(source, duration=0.6)
-            self._recognizer.energy_threshold = max(300, self._recognizer.energy_threshold * 1.35)
+            self._recognizer.energy_threshold = max(380, self._recognizer.energy_threshold * 1.5)
             audio = self._recognizer.listen(
                 source,
                 timeout=timeout_sec,
                 phrase_time_limit=phrase_time_limit_sec,
             )
+
+        # Fast pre-filter to drop low-volume ambient noise before Whisper.
+        raw_pcm = audio.get_raw_data(convert_rate=16000, convert_width=2)
+        if audioop.rms(raw_pcm, 2) < 120:
+            return None
 
         wav_bytes = audio.get_wav_data(convert_rate=16000, convert_width=2)
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
@@ -58,12 +64,12 @@ class WhisperSpeechRecognizer:
                 fp16=False,
                 temperature=0.0,
                 condition_on_previous_text=False,
-                no_speech_threshold=0.7,
+                no_speech_threshold=0.82,
             )
 
             segments = result.get("segments") or []
             if segments:
-                all_silent = all(float(seg.get("no_speech_prob", 0.0)) > 0.7 for seg in segments)
+                all_silent = all(float(seg.get("no_speech_prob", 0.0)) > 0.8 for seg in segments)
                 if all_silent:
                     return None
 
