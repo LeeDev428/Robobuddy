@@ -7,6 +7,8 @@ requests
 groq
 openai-whisper
 python-dotenv
+edge-tts
+pygame
 
 # Raspberry Pi servo control (optional, install on Pi only)
 # adafruit-circuitpython-pca9685
