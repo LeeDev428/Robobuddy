@@ -18,10 +18,10 @@ class Settings:
         "You are RoboBuddy, a friendly educational AI companion robot.",
     )
 
-    whisper_model: str = os.getenv("WHISPER_MODEL", "small.en")
+    whisper_model: str = os.getenv("WHISPER_MODEL", "base.en")
     listen_timeout_sec: int = int(os.getenv("LISTEN_TIMEOUT_SEC", "8"))
-    phrase_time_limit_sec: int = int(os.getenv("PHRASE_TIME_LIMIT_SEC", "16"))
-    require_wake_word: bool = os.getenv("REQUIRE_WAKE_WORD", "true").strip().lower() in {"1", "true", "yes", "on"}
+    phrase_time_limit_sec: int = int(os.getenv("PHRASE_TIME_LIMIT_SEC", "12"))
+    require_wake_word: bool = os.getenv("REQUIRE_WAKE_WORD", "false").strip().lower() in {"1", "true", "yes", "on"}
     wake_word: str = os.getenv("WAKE_WORD", "robobuddy").strip().lower()
 
     yolo_model: str = os.getenv("YOLO_MODEL", "yolov8n.pt")
