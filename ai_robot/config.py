@@ -13,7 +13,6 @@ class Settings:
     """Runtime settings loaded from environment variables."""
 
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
-    groq_model: str = os.getenv("GROQ_MODEL", "")
     system_prompt: str = os.getenv(
         "SYSTEM_PROMPT",
         "You are RoboBuddy, a friendly educational AI companion robot.",
@@ -31,9 +30,10 @@ class Settings:
     robot_port: int = int(os.getenv("ROBOT_PORT", "5000"))
     socket_timeout_sec: float = float(os.getenv("SOCKET_TIMEOUT_SEC", "2.0"))
 
-    tts_rate: int = int(os.getenv("TTS_RATE", "170"))
     tts_volume: float = float(os.getenv("TTS_VOLUME", "1.0"))
-    tts_voice: str = os.getenv("TTS_VOICE", "en-US-GuyNeural")
+    tts_voice: str = os.getenv("TTS_VOICE", "en-US-AnaNeural")
+    tts_rate_pct: str = os.getenv("TTS_RATE_PCT", "+12%")
+    tts_pitch_hz: str = os.getenv("TTS_PITCH_HZ", "+28Hz")
 
 
 def load_settings() -> Settings:
