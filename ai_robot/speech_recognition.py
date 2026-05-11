@@ -75,7 +75,10 @@ class WhisperSpeechRecognizer:
 
                 mean_logprob = sum(float(seg.get("avg_logprob", -1.0)) for seg in segments) / len(segments)
                 raw_text = (result.get("text") or "").strip()
-                if mean_logprob < -1.0 and len(raw_text) < 8:
+                compression_ratio = max(float(seg.get("compression_ratio", 1.0)) for seg in segments)
+                if mean_logprob < -0.9 and len(raw_text) < 12:
+                    return None
+                if compression_ratio > 2.4:
                     return None
 
             text = (result.get("text") or "").strip()
