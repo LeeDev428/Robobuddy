@@ -5,6 +5,7 @@ import tempfile
 import threading
 import time
 
+os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 import pygame
 
 
@@ -17,8 +18,8 @@ class TextToSpeech:
         self,
         voice: str = "en-US-AnaNeural",
         volume: float = 1.0,
-        rate: str = "+12%",
-        pitch: str = "+28Hz",
+        rate: str = "+8%",
+        pitch: str = "+24Hz",
     ) -> None:
         self._voice = voice
         self._volume = min(max(volume, 0.0), 1.0)
