@@ -29,6 +29,6 @@ class WhisperSpeechRecognizer:
             tmp.write(wav_bytes)
             tmp_path = tmp.name
 
-        result = self._model.transcribe(tmp_path)
+        result = self._model.transcribe(tmp_path, language="en", fp16=False)
         text = (result.get("text") or "").strip()
         return text or None
