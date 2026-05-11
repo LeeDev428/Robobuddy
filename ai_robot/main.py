@@ -80,7 +80,7 @@ def run() -> None:
     args = parse_args()
     settings = load_settings()
 
-    tts = TextToSpeech(rate=settings.tts_rate, volume=settings.tts_volume)
+    tts = TextToSpeech(voice=settings.tts_voice, volume=settings.tts_volume)
     stt = WhisperSpeechRecognizer(model_name=settings.whisper_model)
     ai = ConversationAI(
         api_key=settings.groq_api_key,
