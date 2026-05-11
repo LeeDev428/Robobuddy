@@ -31,9 +31,9 @@ class Settings:
     socket_timeout_sec: float = float(os.getenv("SOCKET_TIMEOUT_SEC", "2.0"))
 
     tts_volume: float = float(os.getenv("TTS_VOLUME", "1.0"))
-    tts_voice: str = os.getenv("TTS_VOICE", "en-US-AnaNeural")
-    tts_rate_pct: str = os.getenv("TTS_RATE_PCT", "+12%")
-    tts_pitch_hz: str = os.getenv("TTS_PITCH_HZ", "+28Hz")
+    tts_voice: str = os.getenv("TTS_VOICE", "en-US-AriaNeural")
+    tts_rate_pct: str = os.getenv("TTS_RATE_PCT", "+22%")
+    tts_pitch_hz: str = os.getenv("TTS_PITCH_HZ", "+45Hz")
 
 
 def load_settings() -> Settings:
