@@ -1,6 +1,7 @@
 .env
 .venv/
 __pycache__/
+ai_robot/__pycache__/
 *.pyc
 robobuddy_data/
 *.pt
