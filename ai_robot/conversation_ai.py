@@ -4,6 +4,9 @@ from groq import Groq
 
 
 PREFERRED_GROQ_MODELS = [
+    "deepseek-r1-distill-llama-70b",
+    "llama-4-maverick-17b-128e-instruct",
+    "llama-4-scout-17b-16e-instruct",
     "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
 ]
@@ -27,10 +30,45 @@ class ConversationAI:
     def _resolve_model(self) -> str:
         # API usage always needs a model; chat UIs simply hide this choice.
         try:
-            available = {m.id for m in self._client.models.list().data}
+            model_ids = [m.id for m in self._client.models.list().data]
+
+            # 1) Prefer hand-picked strong models if available.
             for candidate in PREFERRED_GROQ_MODELS:
-                if candidate in available:
+                if candidate in model_ids:
                     return candidate
+
+            # 2) Otherwise score available text models and pick the best one.
+            def is_text_model(model_id: str) -> bool:
+                lower = model_id.lower()
+                if any(x in lower for x in ["whisper", "tts", "speech", "vision", "image", "sdxl"]):
+                    return False
+                return any(
+                    x in lower
+                    for x in ["llama", "deepseek", "qwen", "mistral", "mixtral", "gemma"]
+                )
+
+            def score(model_id: str) -> int:
+                lower = model_id.lower()
+                value = 0
+                if "r1" in lower or "reason" in lower:
+                    value += 500
+                if "405b" in lower:
+                    value += 450
+                if "70b" in lower:
+                    value += 350
+                if "llama-4" in lower:
+                    value += 300
+                if "llama-3.3" in lower:
+                    value += 220
+                if "versatile" in lower:
+                    value += 120
+                if "instant" in lower:
+                    value -= 180
+                return value
+
+            text_models = [mid for mid in model_ids if is_text_model(mid)]
+            if text_models:
+                return max(text_models, key=score)
         except Exception:
             pass
 
@@ -42,7 +80,7 @@ class ConversationAI:
         response = self._client.chat.completions.create(
             model=self._model,
             messages=self._messages,
-            temperature=0.2,
+            temperature=0.0,
             max_tokens=220,
         )
 
