@@ -13,13 +13,13 @@ class Settings:
     """Runtime settings loaded from environment variables."""
 
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
-    groq_model: str = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    groq_model: str = os.getenv("GROQ_MODEL", "")
     system_prompt: str = os.getenv(
         "SYSTEM_PROMPT",
         "You are RoboBuddy, a friendly educational AI companion robot.",
     )
 
-    whisper_model: str = os.getenv("WHISPER_MODEL", "base")
+    whisper_model: str = os.getenv("WHISPER_MODEL", "small.en")
     listen_timeout_sec: int = int(os.getenv("LISTEN_TIMEOUT_SEC", "6"))
     phrase_time_limit_sec: int = int(os.getenv("PHRASE_TIME_LIMIT_SEC", "10"))
 
