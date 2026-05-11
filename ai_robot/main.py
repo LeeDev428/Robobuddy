@@ -110,6 +110,7 @@ def run() -> None:
     print("[TIP] Say 'exit' or 'quit' to stop.")
 
     greeted = False
+    pending_user_text: str | None = None  # Set when user interrupts AI speech
     try:
         while True:
             if args.stage >= 2 and detector is not None:
@@ -129,38 +130,49 @@ def run() -> None:
                 print(f"[TTS] {greeting}")
                 if robot is not None:
                     robot.wave_arm()
-                tts.speak(greeting)
+                interrupt = speak_interruptible(tts, stt, greeting, settings)
                 greeted = True
+                if interrupt:
+                    pending_user_text = interrupt
 
-            print("[STT] Listening...")
-            try:
-                user_text = stt.listen_and_transcribe(
-                    timeout_sec=settings.listen_timeout_sec,
-                    phrase_time_limit_sec=settings.phrase_time_limit_sec,
-                )
-            except Exception as exc:
-                print(f"[STT] Could not capture audio: {exc}")
-                continue
+            # ---- Get user input ----
+            if pending_user_text:
+                user_text = pending_user_text
+                pending_user_text = None
+                print(f"[USER-INTERRUPT] {user_text}")
+            else:
+                print("[STT] Listening...")
+                try:
+                    user_text = stt.listen_and_transcribe(
+                        timeout_sec=settings.listen_timeout_sec,
+                        phrase_time_limit_sec=settings.phrase_time_limit_sec,
+                    )
+                except Exception as exc:
+                    print(f"[STT] Could not capture audio: {exc}")
+                    continue
 
-            if not user_text:
-                print("[STT] No speech recognized.")
-                continue
+                if not user_text:
+                    print("[STT] No speech recognized.")
+                    continue
 
-            print(f"[USER] {user_text}")
+                print(f"[USER] {user_text}")
+
             if user_text.lower() in {"quit", "exit", "stop"}:
-                bye = "Goodbye. See you next time."
+                bye = "Goodbye. See you next time!"
                 if robot is not None:
                     robot.head_turn_right()
                 tts.speak(bye)
                 break
 
+            # ---- Ask AI ----
             try:
                 ai_text = ai.ask(user_text)
             except Exception as exc:
-                ai_text = f"I am having trouble reaching the AI service right now. {exc}"
+                ai_text = f"I am having trouble reaching my brain right now. Please try again."
+                print(f"[ERROR] {exc}")
 
             print(f"[AI] {ai_text}")
-            
+
             # Log conversation
             logger.log_conversation(
                 user_input=user_text,
@@ -171,9 +183,13 @@ def run() -> None:
 
             if robot is not None:
                 robot.speaking_motion()
-            tts.speak(ai_text)
 
-            # In stage 4, require person presence before every interaction cycle.
+            # ---- Speak response (interruptible) ----
+            interrupt = speak_interruptible(tts, stt, ai_text, settings)
+            if interrupt:
+                pending_user_text = interrupt
+
+            # Stage 4: require person presence before every interaction cycle.
             if args.stage >= 4:
                 greeted = False
 
