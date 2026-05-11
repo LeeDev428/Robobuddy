@@ -10,6 +10,20 @@ from ai_robot.tts import TextToSpeech
 from ai_robot.vision import PersonDetector
 
 
+def extract_after_wake_word(text: str, wake_word: str) -> str | None:
+    lower = text.lower().strip()
+    wake = wake_word.lower().strip()
+    if not wake:
+        return text.strip()
+
+    idx = lower.find(wake)
+    if idx == -1:
+        return None
+
+    after = text[idx + len(wake):].strip(" ,.:;!?-")
+    return after
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="RoboBuddy AI companion robot")
     parser.add_argument(
@@ -73,6 +87,8 @@ def run() -> None:
 
     print(f"[BOOT] RoboBuddy started in stage {args.stage}")
     print(f"[AI] Using Groq model: {ai.model}")
+    if settings.require_wake_word:
+        print(f"[TIP] Wake word is '{settings.wake_word}'. Example: '{settings.wake_word}, how do I get a license in the Philippines?'")
     print("[TIP] Say 'exit' or 'quit' to stop.")
 
     greeted = False
@@ -112,6 +128,16 @@ def run() -> None:
             if not user_text:
                 print("[STT] No speech recognized.")
                 continue
+
+            if settings.require_wake_word:
+                extracted = extract_after_wake_word(user_text, settings.wake_word)
+                if extracted is None:
+                    print("[STT] Ignored (wake word not detected).")
+                    continue
+                if not extracted:
+                    print("[STT] Wake word heard. Waiting for your question...")
+                    continue
+                user_text = extracted
 
             print(f"[USER] {user_text}")
 
