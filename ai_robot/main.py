@@ -89,11 +89,15 @@ def run() -> None:
     args = parse_args()
     settings = load_settings()
 
-    tts = TextToSpeech(voice=settings.tts_voice, volume=settings.tts_volume)
+    tts = TextToSpeech(
+        voice=settings.tts_voice,
+        volume=settings.tts_volume,
+        rate=settings.tts_rate_pct,
+        pitch=settings.tts_pitch_hz,
+    )
     stt = WhisperSpeechRecognizer(model_name=settings.whisper_model)
     ai = ConversationAI(
         api_key=settings.groq_api_key,
-        model=settings.groq_model,
         system_prompt=settings.system_prompt,
     )
     logger = DataLogger()
@@ -187,7 +191,7 @@ def run() -> None:
             logger.log_conversation(
                 user_input=user_text,
                 ai_response=ai_text,
-                model_used=settings.groq_model,
+                model_used=ai.model,
                 person_present=(detector is not None and result.person_detected) if args.stage >= 2 else None
             )
 
@@ -202,6 +206,9 @@ def run() -> None:
             # Stage 4: require person presence before every interaction cycle.
             if args.stage >= 4:
                 greeted = False
+
+    except KeyboardInterrupt:
+        print("\n[EXIT] Stopped by user.")
 
     finally:
         if detector is not None:
