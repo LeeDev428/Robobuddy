@@ -2,6 +2,7 @@ import asyncio
 import os
 import tempfile
 import threading
+import time
 
 import pygame
 
@@ -11,9 +12,17 @@ class TextToSpeech:
     Supports stop() to interrupt mid-speech (for user interruptions).
     """
 
-    def __init__(self, voice: str = "en-US-GuyNeural", volume: float = 1.0) -> None:
+    def __init__(
+        self,
+        voice: str = "en-US-AnaNeural",
+        volume: float = 1.0,
+        rate: str = "+12%",
+        pitch: str = "+28Hz",
+    ) -> None:
         self._voice = voice
         self._volume = min(max(volume, 0.0), 1.0)
+        self._rate = rate
+        self._pitch = pitch
         self._stop_flag = threading.Event()
         pygame.mixer.init()
 
@@ -37,8 +46,13 @@ class TextToSpeech:
             pygame.mixer.music.set_volume(self._volume)
             pygame.mixer.music.play()
 
+            max_playback_sec = max(8.0, min(45.0, (len(text) / 14.0) * 1.2 + 3.0))
+            deadline = time.monotonic() + max_playback_sec
             while pygame.mixer.music.get_busy():
                 if self._stop_flag.is_set():
+                    pygame.mixer.music.stop()
+                    break
+                if time.monotonic() >= deadline:
                     pygame.mixer.music.stop()
                     break
                 pygame.time.wait(50)
@@ -78,7 +92,12 @@ class TextToSpeech:
 
     async def _generate_async(self, text: str) -> bytes:
         import edge_tts  # lazy import — only needed here
-        communicate = edge_tts.Communicate(text, self._voice)
+        communicate = edge_tts.Communicate(
+            text,
+            self._voice,
+            rate=self._rate,
+            pitch=self._pitch,
+        )
         data = b""
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
