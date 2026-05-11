@@ -16,10 +16,10 @@ class TextToSpeech:
 
     def __init__(
         self,
-        voice: str = "en-US-AnaNeural",
+        voice: str = "en-US-AriaNeural",
         volume: float = 1.0,
-        rate: str = "+8%",
-        pitch: str = "+24Hz",
+        rate: str = "+22%",
+        pitch: str = "+45Hz",
     ) -> None:
         self._voice = voice
         self._volume = min(max(volume, 0.0), 1.0)
