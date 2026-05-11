@@ -1,5 +1,6 @@
-import asyncio
 import os
+import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -77,30 +78,35 @@ class TextToSpeech:
             pass
 
     def _generate_sync(self, text: str) -> bytes:
-        """Run async edge-tts generation synchronously."""
-        try:
-            return asyncio.run(self._generate_async(text))
-        except RuntimeError:
-            # Fallback: run in a new thread with its own event loop
-            result = [b""]
-            def _run():
-                result[0] = asyncio.run(self._generate_async(text))
-            t = threading.Thread(target=_run)
-            t.start()
-            t.join(timeout=15)
-            return result[0]
+        """Generate MP3 bytes via edge-tts CLI (stable on Windows event loops)."""
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as out_file:
+            out_path = out_file.name
 
-    async def _generate_async(self, text: str) -> bytes:
-        import edge_tts  # lazy import — only needed here
-        communicate = edge_tts.Communicate(
-            text,
-            self._voice,
-            rate=self._rate,
-            pitch=self._pitch,
-        )
-        data = b""
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                data += chunk["data"]
-        return data
+        try:
+            cmd = [
+                sys.executable,
+                "-m",
+                "edge_tts",
+                "--voice",
+                self._voice,
+                "--rate",
+                self._rate,
+                "--pitch",
+                self._pitch,
+                "--text",
+                text,
+                "--write-media",
+                out_path,
+            ]
+            subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+            with open(out_path, "rb") as f:
+                return f.read()
+        except Exception:
+            return b""
+        finally:
+            try:
+                os.unlink(out_path)
+            except OSError:
+                pass
 
