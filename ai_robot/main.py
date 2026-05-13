@@ -1,4 +1,5 @@
 import argparse
+import random
 import time
 
 from ai_robot.config import load_settings
@@ -10,7 +11,23 @@ from ai_robot.tts import TextToSpeech
 from ai_robot.vision import PersonDetector
 
 
-def extract_after_wake_word(text: str, wake_word: str) -> str | None:
+_GREETINGS = [
+    "Oh! A human! Hello there, nice to see you!",
+    "Beep boop! I spotted you! Hi hi hi!",
+    "Hey! You there! I am RoboBuddy, your adorable robot friend!",
+    "Oh my circuits, a visitor! Welcome, welcome!",
+    "Human detected! Activating friendliness protocol — hello!",
+    "Well hello there! I have been waiting for someone to talk to!",
+    "Whoa, you appeared! I am RoboBuddy, pleased to meet you!",
+    "Oh! There you are! I almost thought I was alone today!",
+]
+
+
+def pick_greeting() -> str:
+    return random.choice(_GREETINGS)
+
+
+(text: str, wake_word: str) -> str | None:
     lower = text.lower().strip()
     wake = wake_word.lower().strip()
     if not wake:
@@ -107,7 +124,7 @@ def run() -> None:
                 )
 
             if not greeted:
-                greeting = "Hello! I am RoboBuddy. Nice to meet you."
+                greeting = pick_greeting()
                 print(f"[TTS] {greeting}")
                 if robot is not None:
                     robot.wave_arm()
