@@ -27,7 +27,7 @@ def pick_greeting() -> str:
     return random.choice(_GREETINGS)
 
 
-(text: str, wake_word: str) -> str | None:
+def extract_after_wake_word(text: str, wake_word: str) -> str | None:
     lower = text.lower().strip()
     wake = wake_word.lower().strip()
     if not wake:
