@@ -213,6 +213,7 @@ class RoboBuddyServer:
         server_socket.bind((self.host, self.port))
         server_socket.listen(5)
         print(f"[SERVER] Listening on {self.host}:{self.port}")
+        client_socket = None
 
         try:
             while self.running:
@@ -232,7 +233,9 @@ class RoboBuddyServer:
                 except Exception as e:
                     print(f"[ERROR] {e}")
                 finally:
-                    client_socket.close()
+                    if client_socket is not None:
+                        client_socket.close()
+                        client_socket = None
         except KeyboardInterrupt:
             print("\n[SHUTDOWN] Received interrupt")
         finally:
