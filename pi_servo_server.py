@@ -10,6 +10,7 @@ Tested on: Raspberry Pi 4 with PCA9685 I2C breakout + SG90 servos.
 """
 
 import socket
+import os
 import sys
 import time
 from typing import Optional
@@ -17,10 +18,11 @@ from typing import Optional
 try:
     from adafruit_pca9685 import PCA9685
     from board import I2C
+    HARDWARE_LIBS_AVAILABLE = True
 except ImportError:
-    print("ERROR: Adafruit libraries not installed.")
-    print("Install with: pip install adafruit-circuitpython-pca9685 adafruit-circuitpython-busdevice")
-    sys.exit(1)
+    PCA9685 = None
+    I2C = None
+    HARDWARE_LIBS_AVAILABLE = False
 
 
 class ServoController:
@@ -39,14 +41,19 @@ class ServoController:
         Args:
             i2c_address: I2C address of PCA9685 (default 0x40)
         """
+        if not HARDWARE_LIBS_AVAILABLE:
+            raise RuntimeError(
+                "Adafruit hardware libraries not installed. "
+                "Install with: pip install adafruit-circuitpython-servokit"
+            )
+
         try:
             i2c = I2C()
             self.pca = PCA9685(i2c, address=i2c_address)
             self.pca.frequency = self.FREQUENCY
             print("[SERVO] PCA9685 initialized successfully")
         except Exception as e:
-            print(f"[ERROR] Failed to initialize PCA9685: {e}")
-            sys.exit(1)
+            raise RuntimeError(f"Failed to initialize PCA9685: {e}") from e
 
         # Servo channel assignments
         self.CHANNEL_HEAD_PAN = 0      # Left/Right
@@ -136,6 +143,31 @@ class ServoController:
         self.set_servo_position(self.CHANNEL_ARM_WAVE, 0, duration_ms=200)
 
 
+class MockServoController:
+    """Drop-in mock controller when hardware is not available."""
+
+    def __init__(self) -> None:
+        print("[MOCK] Servo hardware unavailable. Running in mock mode.")
+
+    def head_turn_left(self) -> None:
+        print("[MOCK] HEAD_LEFT")
+
+    def head_turn_right(self) -> None:
+        print("[MOCK] HEAD_RIGHT")
+
+    def head_center(self) -> None:
+        print("[MOCK] HEAD_CENTER")
+
+    def wave_arm(self) -> None:
+        print("[MOCK] WAVE_ARM")
+
+    def speaking_motion(self) -> None:
+        print("[MOCK] SPEAK_START")
+
+    def shutdown(self) -> None:
+        print("[MOCK] Shutdown")
+
+
 class RoboBuddyServer:
     """Socket server that receives motion commands from laptop."""
 
@@ -214,7 +246,23 @@ def main() -> None:
     print("RoboBuddy Raspberry Pi Servo Control Server")
     print("=" * 50)
 
-    servo = ServoController(i2c_address=0x40)
+    mock_requested = os.getenv("ROBOBUDDY_MOCK_SERVO", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+    try:
+        servo = ServoController(i2c_address=0x40)
+    except Exception as e:
+        if not mock_requested:
+            print(f"[ERROR] {e}")
+            print("[HINT] Fix PCA9685 wiring or set ROBOBUDDY_MOCK_SERVO=1 to continue without hardware.")
+            sys.exit(1)
+        print(f"[WARN] {e}")
+        servo = MockServoController()
+
     server = RoboBuddyServer(host="0.0.0.0", port=5000, servo_controller=servo)
 
     print("\nWaiting for commands from laptop...")
