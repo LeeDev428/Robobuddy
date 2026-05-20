@@ -1,5 +1,6 @@
 import argparse
 import random
+import threading
 import time
 
 from ai_robot.config import load_settings
@@ -66,6 +67,31 @@ def wait_for_person(detector: PersonDetector, preview: bool) -> None:
             print(f"[VISION] Person detected (confidence={result.confidence:.2f})")
             return
         time.sleep(0.35)
+
+
+def speak_with_random_gestures(tts: TextToSpeech, robot: RobotController | None, text: str) -> None:
+    """Speak text while sending light random gestures in parallel."""
+    if robot is None:
+        tts.speak(text)
+        return
+
+    stop_event = threading.Event()
+
+    def _gesture_loop() -> None:
+        gestures = [robot.head_turn_left, robot.head_turn_right, robot.wave_arm, robot.speaking_motion]
+        while not stop_event.is_set():
+            random.choice(gestures)()
+            sleep_time = random.uniform(0.8, 1.6)
+            stop_event.wait(timeout=sleep_time)
+
+    gesture_thread = threading.Thread(target=_gesture_loop, daemon=True)
+    gesture_thread.start()
+    try:
+        tts.speak(text)
+    finally:
+        stop_event.set()
+        gesture_thread.join(timeout=0.5)
+        robot.head_turn_right()
 
 
 def run() -> None:
@@ -162,7 +188,7 @@ def run() -> None:
                 bye = "Goodbye. See you next time!"
                 if robot is not None:
                     robot.head_turn_right()
-                tts.speak(bye)
+                speak_with_random_gestures(tts, robot, bye)
                 break
 
             # ---- Ask AI ----
@@ -182,11 +208,8 @@ def run() -> None:
                 person_present=(detector is not None and result.person_detected) if args.stage >= 2 else None
             )
 
-            if robot is not None:
-                robot.speaking_motion()
-
             # ---- Speak response ----
-            tts.speak(ai_text)
+            speak_with_random_gestures(tts, robot, ai_text)
 
             # Stage 4: require person presence before every interaction cycle.
             if args.stage >= 4:
