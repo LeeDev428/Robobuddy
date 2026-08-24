@@ -380,4 +380,16 @@ This system can be used in:
 
 ## 👨‍💻 Developer
 
-Lee Torres
+**Lee Rafael Torres (Lee Torres)** — Software Engineer
+
+- Age: 23
+- Location: Calauan, Laguna, Philippines
+- Education: PUP Calauan Campus, Laguna
+- Facebook: [lee.torres.5496683](https://www.facebook.com/lee.torres.5496683/)
+- GitHub: [LeeDev428](https://github.com/LeeDev428)
+- LinkedIn: [Lee Torres](https://www.linkedin.com/in/lee-torres-361168333/)
+- Website: [leedev.vercel.app](https://leedev.vercel.app/)
+
+Lee is a full-stack software engineer with experience across companies and freelance projects. He designs,
+builds, maintains, scales, and improves enterprise applications, systems, mobile apps, and websites, with
+hands-on work in DevOps, AI, machine learning, and deep learning.
