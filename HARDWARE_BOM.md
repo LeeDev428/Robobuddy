@@ -8,7 +8,7 @@
 
 | Category | Est. Cost | Purpose |
 |----------|-----------|---------|
-| **Core Brain (Raspberry Pi)** | ₱3,500–4,500 | Motor control, servo driver, network bridge |
+| **Core Brain (Raspberry Pi)** | ₱600–3,500 | Motor control, servo driver, network bridge (Pi Zero 2 W recommended) |
 | **Motion (Servos + Bracket)** | ₱2,000–3,500 | Head tilt/pan, arm wave |
 | **Power Supply** | ₱1,500–2,500 | Stable 5V/2A for Pi, 6V/2A for servos |
 | **Storage (SSD)** | ₱1,200–3,000 | Fast detection logs, YOLO weights, conversation history |
@@ -21,19 +21,27 @@
 
 ## 🧠 1. Core Controller (Raspberry Pi)
 
-### Primary Choice: Raspberry Pi 4 Model B (4GB recommended for your use case)
+> **Why your Pi doesn't need to be expensive:** Your laptop (GTX 1650) handles ALL compute — YOLO, Whisper, Groq API. The Pi only runs a Python socket server and sends I2C signals to PCA9685. That uses less than 5% of even the cheapest Pi.
+
+### ✅ Primary Choice: Raspberry Pi Zero 2 W (Best Value for This Project)
 
 | Component | Spec | Why | Cost |
 |-----------|------|-----|------|
-| **Raspberry Pi 4 Model B** | 4GB RAM (or 8GB if budget) | Enough to run socket server + servo control + WiFi. Not running YOLO here—your PC does that. | ₱2,500–3,500 |
-| **MicroSD Card** | 32GB UHS-I | Boot OS, Pi-side scripts. Speed matters for logging commands. | ₱400–600 |
-| **Power Supply** | 5V/3A USB-C | Stable supply prevents servo lag/glitches. Official is best. | ₱600–800 |
+| **Raspberry Pi Zero 2 W** | Quad-core ARM A53 @ 1GHz, 512MB RAM | Handles socket server + I2C servo commands easily. Built-in WiFi. Same 40-pin GPIO as Pi 4. | ₱600–1,200 |
+| **MicroSD Card** | 32GB A1 Class | Boot OS + Pi-side scripts. | ₱300–500 |
+| **Power Supply** | 5V/2.5A Micro-USB | Pi Zero uses Micro-USB, NOT USB-C. | ₱300–500 |
 
-### Why Raspberry Pi 4?
-- Stable GPIO for servo control via PCA9685
-- Dual WiFi (2.4/5GHz) for reliable laptop→Pi communication
-- Affordable entry point; no need for Jetson (since ML runs on your GTX 1650)
-- Plenty of community examples for servo control
+> **Important when buying:** Search for **"Pi Zero 2 W with headers"** or **"pre-soldered headers"** — saves you from soldering 40 pins yourself.
+
+### Pi Options Comparison (Choose Based on Budget)
+
+| Board | RAM | WiFi | Works With Existing Code | Price (PHP) | Verdict |
+|-------|-----|------|--------------------------|------------:|---------|
+| **Pi Zero 2 W** ✅ | 512MB | 2.4GHz | Yes | 600–1,200 | **Best value — recommended** |
+| Pi 3 Model B+ | 1GB | 2.4/5GHz | Yes | 1,500–2,800 | Safe middle ground, full USB ports |
+| Pi 4 Model B 2GB | 2GB | 2.4/5GHz | Yes | 2,000–3,500 | If you want USB audio output on the Pi side |
+| Pi 4 Model B 4GB | 4GB | 2.4/5GHz | Yes | 3,000–5,800 | Overkill for this project |
+| Pi Pico W | 264KB | 2.4GHz | **No** (MicroPython rewrite needed) | 150–350 | Skip unless extreme budget constraint |
 
 ---
 
@@ -247,23 +255,23 @@ C:\RoboBuddy_Data\
 
 | Item | Qty | Unit Cost | Total | Notes |
 |------|-----|-----------|-------|-------|
-| **Raspberry Pi 4 Model B (4GB)** | 1 | ₱3,000 | ₱3,000 | Core controller |
-| **MicroSD Card 32GB** | 1 | ₱500 | ₱500 | Pi OS boot |
-| **Pi Power Supply 5V/3A** | 1 | ₱700 | ₱700 | Official recommended |
+| **Raspberry Pi Zero 2 W (with headers)** | 1 | ₱900 | ₱900 | Core controller (servo relay only) |
+| **MicroSD Card 32GB A1** | 1 | ₱400 | ₱400 | Pi OS boot |
+| **Pi Power Supply 5V/2.5A Micro-USB** | 1 | ₱400 | ₱400 | Pi Zero uses Micro-USB, NOT USB-C |
 | **PCA9685 Breakout** | 1 | ₱200 | ₱200 | Servo driver |
 | **SG90 Servo Motor** | 4 | ₱350 | ₱1,400 | Head (2×) + Arm (1×) + Spare (1×) |
-| **MG90S Servo Motor** | 2 | ₱450 | ₱900 | Backup or stronger arm drive |
-| **Servo Power Supply 6V/2A** | 1 | ₱1,000 | ₱1,000 | Separate PSU for servos |
-| **USB Webcam 1080p** | 1 | ₱900 | ₱900 | Vision input |
-| **USB Microphone** | 1 | ₱500 | ₱500 | Audio input |
-| **USB Speaker 2W** | 1 | ₱400 | ₱400 | TTS output |
-| **External SSD 256GB USB3.1** | 1 | ₱2,000 | ₱2,000 | Detection logs + chat backup |
+| **MG90S Servo Motor** | 2 | ₱450 | ₱900 | Metal gear, stronger (swap for SG90 if budget tight) |
+| **Servo Power Supply 6V/2A** | 1 | ₱1,000 | ₱1,000 | Separate PSU for servos (never power from Pi GPIO) |
+| **USB Webcam 1080p** | 1 | ₱900 | ₱900 | Vision input — connects to laptop |
+| **USB Microphone** | 1 | ₱500 | ₱500 | Audio input — connects to laptop |
+| **USB Speaker 2W** | 1 | ₱400 | ₱400 | TTS output — connects to laptop |
+| **External SSD 256GB USB3.1** | 1 | ₱2,000 | ₱2,000 | Detection logs + chat backup (optional, laptop internal SSD also works) |
 | **Breadboard + Jumper Wires** | 1 set | ₱250 | ₱250 | Prototyping |
 | **GPIO Headers + Connectors** | 1 set | ₱200 | ₱200 | Header connectivity |
 | **XT60 + Fuse Kit** | 1 set | ₱300 | ₱300 | Power distribution |
 | **3D Printing (15 hrs @ ₱75/hr + filament)** | — | ₱75/hr | ₱1,350 | Chassis, mounts |
-| **Miscellaneous (cables, solder, heatsinks)** | — | — | ₱800 | Buffer for small items |
-| | | **TOTAL** | **₱13,900** | |
+| **Miscellaneous (cables, solder, heatsinks)** | — | — | ₱700 | Buffer for small items |
+| | | **TOTAL** | **₱11,500** | (vs ₱13,900 before — saves ~₱2,400 by choosing Pi Zero 2 W) |
 
 ---
 
