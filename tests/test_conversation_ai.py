@@ -18,8 +18,10 @@ class FakeProvider:
         self.response = response
         self.error = error
         self.calls: list[list[dict[str, str]]] = []
+        self.system_prompts: list[str] = []
 
     def generate(self, system_prompt, messages, max_output_tokens):
+        self.system_prompts.append(system_prompt)
         self.calls.append([message.copy() for message in messages])
         if self.error is not None:
             raise self.error
@@ -31,6 +33,36 @@ class FakeBadRequest(RuntimeError):
 
 
 class ConversationAITests(unittest.TestCase):
+    def test_direct_creator_question_is_answered_locally_and_authoritatively(self) -> None:
+        provider = FakeProvider("fake", error=RuntimeError("must not be called"))
+        ai = ConversationAI(system_prompt="Test", providers=[provider])
+
+        answer = ai.ask("Who developed you?")
+
+        self.assertTrue(answer.startswith("I was created and developed by Lee Torres"))
+        self.assertIn("Lee Rafael Torres", answer)
+        self.assertEqual(provider.calls, [])
+        self.assertEqual(len(ai.history), 2)
+
+    def test_creator_social_links_are_answered_locally(self) -> None:
+        provider = FakeProvider("fake", error=RuntimeError("must not be called"))
+        ai = ConversationAI(system_prompt="Test", providers=[provider])
+
+        answer = ai.ask("What is your creator's GitHub and website?")
+
+        self.assertIn("https://github.com/LeeDev428", answer)
+        self.assertIn("https://leedev.vercel.app/", answer)
+        self.assertEqual(provider.calls, [])
+
+    def test_provider_always_receives_creator_context(self) -> None:
+        provider = FakeProvider("fake", response="Hello")
+        ai = ConversationAI(system_prompt="Test", providers=[provider])
+
+        ai.ask("Hello")
+
+        self.assertIn("Lee Rafael Torres", provider.system_prompts[0])
+        self.assertIn("https://github.com/LeeDev428", provider.system_prompts[0])
+
     def test_classifier_models_are_never_candidates(self) -> None:
         candidates = _unique_chat_models("meta-llama/llama-prompt-guard-2-22m")
 
