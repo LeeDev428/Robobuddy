@@ -186,6 +186,9 @@ class GroqChatProvider:
                 if not text:
                     raise RuntimeError("The model returned an empty response.")
                 self.model = model
+                if self._models[0] != model:
+                    self._models.remove(model)
+                    self._models.insert(0, model)
                 return text
             except Exception as exc:
                 failures.append(f"{model}: {exc}")
@@ -383,6 +386,9 @@ class ConversationAI:
                 continue
 
             self._active_provider = provider
+            if self._providers[0] is not provider:
+                self._providers.remove(provider)
+                self._providers.insert(0, provider)
             self._messages.extend(
                 [
                     {"role": "user", "content": cleaned_user_text},
