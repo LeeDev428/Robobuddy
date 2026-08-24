@@ -28,7 +28,7 @@ This project addresses the need for a more human-like, interactive, and accessib
 
 * Runs YOLOv8 for person detection
 * Handles speech recognition (Whisper)
-* Sends requests to Groq API (Llama 3)
+* Sends conversational requests to Groq or the optional OpenAI API
 * Coordinates system logic
 
 ### 🤖 Raspberry Pi (Robot Controller)
@@ -39,7 +39,7 @@ This project addresses the need for a more human-like, interactive, and accessib
 
 ### ☁️ AI Services
 
-* Groq API for conversational AI (Llama 3)
+* Groq API by default, with an optional OpenAI Responses API provider
 
 ---
 
@@ -65,7 +65,7 @@ Robobuddy/
 
 ## 🚀 Stage-by-Stage Development
 
-1. Stage 1: Talking AI only (Whisper -> Groq -> TTS)
+1. Stage 1: Talking AI only (Whisper -> selected AI provider -> TTS)
 2. Stage 2: Add YOLO person detection + greeting trigger
 3. Stage 3: Add Raspberry Pi servo movement commands via socket
 4. Stage 4: Full cycle improvements (re-greeting per detection cycle)
@@ -88,8 +88,9 @@ pip install -r requirements.txt
 Environment variables (PowerShell example):
 
 ```powershell
+$env:AI_PROVIDER="groq"
 $env:GROQ_API_KEY="your_key_here"
-$env:GROQ_MODEL="llama-3.1-8b-instant"
+$env:GROQ_MODEL="openai/gpt-oss-120b"
 $env:WHISPER_MODEL="base"
 $env:ROBOT_HOST="192.168.1.50"
 $env:ROBOT_PORT="5000"
@@ -115,6 +116,12 @@ Optional flag:
 
 ```powershell
 python main.py --stage 2 --no-preview
+```
+
+Run the hardware-free automated checks:
+
+```powershell
+python -m unittest discover -s tests -v
 ```
 
 ---
@@ -185,13 +192,24 @@ python main.py --stage 1
 
 ### 3. Configure Environment Variables
 
-Copy `.env.example` to `.env` and fill in:
+Copy `.env.example` to `.env` and fill in one provider key:
 ```powershell
+$env:AI_PROVIDER="groq"
 $env:GROQ_API_KEY="your_groq_api_key_here"
-$env:GROQ_MODEL="llama-3.1-8b-instant"
+$env:GROQ_MODEL="openai/gpt-oss-120b"
 $env:WHISPER_MODEL="base"
 $env:ROBOT_HOST="192.168.1.50"  # Your Pi's IP
 ```
+
+Optional OpenAI API configuration:
+
+```powershell
+$env:AI_PROVIDER="openai"
+$env:OPENAI_API_KEY="your_openai_api_key_here"
+$env:OPENAI_MODEL="gpt-5.6-terra"
+```
+
+ChatGPT Business and the OpenAI API are separate products with separate billing. A Business seat does not supply API usage to this Python application. With `AI_PROVIDER=auto`, RoboBuddy prefers OpenAI when an OpenAI API key exists and otherwise uses Groq; when both keys exist, Groq is also available as a provider fallback.
 
 Or save as `.env` file:
 ```bash
@@ -218,7 +236,7 @@ See **[PI_SETUP_GUIDE.md](PI_SETUP_GUIDE.md)** for detailed instructions. Quick 
 
 ### Stage 1: Talking AI (No Hardware)
 ```powershell
-# Test that Groq API + speech works
+# Test that the selected AI provider + speech works
 python main.py --stage 1
 
 # Say: "What's the weather?"
@@ -297,7 +315,7 @@ Each log file is JSONL format (one JSON object per line) for easy processing:
 2. System triggers greeting
 3. User speaks through microphone
 4. Speech is converted to text (Whisper)
-5. Text is sent to Groq API
+5. Text is sent to the configured conversational AI provider
 6. AI generates response
 7. Response is converted to speech
 8. Robot speaks and performs movement
@@ -308,7 +326,7 @@ Each log file is JSONL format (one JSON object per line) for easy processing:
 
 * Person Detection (Computer Vision)
 * Voice Interaction (Speech-to-Text & Text-to-Speech)
-* AI Conversation (Groq API)
+* AI Conversation (Groq or optional OpenAI API)
 * Minimal Robot Movement (Servo Motors)
 * Real-time Interaction
 
@@ -321,8 +339,8 @@ Each log file is JSONL format (one JSON object per line) for easy processing:
 * Python
 * YOLOv8 (Ultralytics)
 * Whisper (Speech Recognition)
-* Groq API (Llama 3)
-* pyttsx3 / Piper TTS
+* Groq Chat Completions / OpenAI Responses API
+* edge-tts with an offline pyttsx3 fallback
 
 ### Hardware
 
