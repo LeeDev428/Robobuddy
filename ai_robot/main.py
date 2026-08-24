@@ -108,6 +108,14 @@ def run() -> None:
     ai = ConversationAI(
         api_key=settings.groq_api_key,
         system_prompt=settings.system_prompt,
+        provider=settings.ai_provider,
+        groq_model=settings.groq_model,
+        openai_api_key=settings.openai_api_key,
+        openai_model=settings.openai_model,
+        timeout_sec=settings.ai_timeout_sec,
+        retries=settings.ai_retries,
+        max_output_tokens=settings.ai_max_output_tokens,
+        history_turns=settings.conversation_turns,
     )
     logger = DataLogger()
 
@@ -129,7 +137,7 @@ def run() -> None:
         )
 
     print(f"[BOOT] RoboBuddy started in stage {args.stage}")
-    print(f"[AI] Using Groq model: {ai.model}")
+    print(f"[AI] Using provider/model: {ai.label}")
     if settings.require_wake_word:
         print(f"[TIP] Wake word is '{settings.wake_word}'. Example: '{settings.wake_word}, how do I get a license in the Philippines?'")
     print("[TIP] Say 'exit' or 'quit' to stop.")
@@ -195,7 +203,7 @@ def run() -> None:
             try:
                 ai_text = ai.ask(user_text)
             except Exception as exc:
-                ai_text = f"I am having trouble reaching my brain right now. Please try again."
+                ai_text = "I am having trouble reaching my brain right now. Please try again."
                 print(f"[ERROR] {exc}")
 
             print(f"[AI] {ai_text}")
@@ -204,7 +212,7 @@ def run() -> None:
             logger.log_conversation(
                 user_input=user_text,
                 ai_response=ai_text,
-                model_used=ai.model,
+                model_used=ai.label,
                 person_present=(detector is not None and result.person_detected) if args.stage >= 2 else None
             )
 
