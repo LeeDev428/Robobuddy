@@ -5,6 +5,7 @@ pyttsx3
 pyaudio
 requests
 groq
+openai
 openai-whisper
 python-dotenv
 edge-tts
