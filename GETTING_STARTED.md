@@ -2,6 +2,8 @@
 
 > **You asked for:** A modular AI robot brain that uses your GTX 1650, stores ML data, and can eventually recognize people. Here's what I delivered.
 
+> **AI provider note:** RoboBuddy now uses a chat-capable Groq model by default and can optionally use the OpenAI Responses API. ChatGPT Business does not include OpenAI API usage; API access requires a separately billed API key. See `.env.example` for `AI_PROVIDER`, model, timeout, retry, and conversation-memory settings.
+
 ---
 
 ## ✅ What's Been Delivered
@@ -44,12 +46,16 @@
    pip install -r requirements.txt
    ```
 
-2. **Get your Groq API key (free)**
+2. **Configure an AI provider**
    - Go to: https://console.groq.com/
    - Create account → Copy API key
    ```powershell
+   $env:AI_PROVIDER="groq"
    $env:GROQ_API_KEY="your_key_here"
+   $env:GROQ_MODEL="openai/gpt-oss-120b"
    ```
+
+   To use OpenAI instead, set `AI_PROVIDER=openai`, `OPENAI_API_KEY`, and `OPENAI_MODEL`. OpenAI API billing is separate from a ChatGPT Business subscription.
 
 3. **Run Stage 1 — Talking AI (mic + speaker only)**
    ```powershell
@@ -316,8 +322,8 @@ Your data structure is already set up for **face recognition** (your future upgr
 | `ai_robot/config.py` | Environment + data paths |
 | `ai_robot/vision.py` | YOLO person detection |
 | `ai_robot/speech_recognition.py` | Whisper STT |
-| `ai_robot/conversation_ai.py` | Groq API client |
-| `ai_robot/tts.py` | pyttsx3 speech synthesis |
+| `ai_robot/conversation_ai.py` | Groq/OpenAI providers, safe failover, retries, and bounded context |
+| `ai_robot/tts.py` | edge-tts neural speech with offline pyttsx3 fallback |
 | `ai_robot/robot_controller.py` | Socket client (→ Pi) |
 | `ai_robot/data_logger.py` | Detection + conversation logging |
 | `pi_servo_server.py` | **Run this on Raspberry Pi** |
