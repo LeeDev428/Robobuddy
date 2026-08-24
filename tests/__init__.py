@@ -1,0 +1,1 @@
+"""RoboBuddy automated tests."""
