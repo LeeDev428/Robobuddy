@@ -27,3 +27,27 @@
 # - Trigger movement when speaking
 
 # Write clean, modular, well-commented Python code
+
+Create this folder structure:
+ai-robot/
+│
+├── main.py
+├── vision.py
+├── speech_recognition.py
+├── conversation_ai.py
+├── tts.py
+├── robot_controller.py
+├── config.py
+├── requirements.txt
+└── README.md
+Or if you have better and neat stucture, pls do it
+
+- Start SIMPLE:
+
+Step 1 → Talking AI (no movement)
+Step 2 → Add person detection
+Step 3 → Add servo movement
+Step 4 → Improve design
+
+
+- Check my entirecodebase comprehensively and review and understand it all systemmatically from migration/database, backend and frontend. Please follow the existing convention and dont over engineer and simplify it as long it will work and follows my requirements/concern issues. DId you get me? here's my codebase.  Understand, Breakdown and Execute and also Read and understand the 'D:\Programming\Personal-Projects\Robobuddy\README.md'. Did you get me all?
