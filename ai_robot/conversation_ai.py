@@ -41,6 +41,92 @@ Conversation rules:
 - Correct false premises politely. Do not invent live or current facts that were not provided.
 """.strip()
 
+_CREATOR_CONTEXT = """
+Creator information (these facts are authoritative):
+- Creator name to say publicly: Lee Torres
+- Full name: Lee Rafael Torres
+- Title: Software Engineer
+- Age: 23
+- Location: Calauan, Laguna, Philippines
+- Education: PUP Calauan Campus, Laguna
+- Facebook: https://www.facebook.com/lee.torres.5496683/
+- GitHub: https://github.com/LeeDev428
+- LinkedIn: https://www.linkedin.com/in/lee-torres-361168333/
+- Website: https://leedev.vercel.app/
+- Professional background: A full-stack software engineer with experience across companies and freelance
+  projects. He designs, builds, maintains, scales, and improves enterprise applications, systems, mobile apps,
+  and websites. His work also includes DevOps, AI, machine learning, and deep learning, delivering real-world
+  solutions that are actively used and continuously evolving.
+
+When asked who created, developed, built, made, or programmed RoboBuddy, always identify Lee Torres first.
+Only provide the additional profile details relevant to what the user asks.
+""".strip()
+
+_CREATOR_IDENTITY_RESPONSE = (
+    "I was created and developed by Lee Torres, whose full name is Lee Rafael Torres. "
+    "He is a 23-year-old Software Engineer based in Calauan, Laguna, Philippines, and studied at "
+    "PUP Calauan Campus. He builds and improves enterprise applications, systems, mobile apps, websites, "
+    "and AI and machine-learning solutions."
+)
+
+_CREATOR_PROFILE_RESPONSE = (
+    "Lee Torres, whose full name is Lee Rafael Torres, is a 23-year-old Software Engineer based in Calauan, "
+    "Laguna, Philippines. He studied at PUP Calauan Campus and has experience across companies and freelance "
+    "projects. He designs, builds, maintains, scales, and improves enterprise applications, systems, mobile "
+    "apps, and websites, with hands-on work in DevOps, AI, machine learning, and deep learning."
+)
+
+_CREATOR_SOCIAL_RESPONSE = (
+    "You can find Lee Torres on Facebook at https://www.facebook.com/lee.torres.5496683/, on GitHub at "
+    "https://github.com/LeeDev428, and on LinkedIn at "
+    "https://www.linkedin.com/in/lee-torres-361168333/. His website is https://leedev.vercel.app/."
+)
+
+
+def creator_response(user_text: str) -> str | None:
+    """Return authoritative local creator details for clear creator questions."""
+    normalized = " ".join(user_text.lower().replace("'", " ").split())
+    creator_reference = any(
+        marker in normalized
+        for marker in (
+            "your creator",
+            "your developer",
+            "your programmer",
+            "lee torres",
+            "lee rafael torres",
+            "creator of robobuddy",
+            "developer of robobuddy",
+        )
+    )
+    identity_question = any(
+        phrase in normalized
+        for phrase in (
+            "who created you",
+            "who developed you",
+            "who built you",
+            "who made you",
+            "who programmed you",
+            "who created robobuddy",
+            "who developed robobuddy",
+            "who built robobuddy",
+            "who made robobuddy",
+            "who programmed robobuddy",
+        )
+    )
+
+    if creator_reference and any(
+        social in normalized for social in ("facebook", "github", "linkedin", "website", "social")
+    ):
+        return _CREATOR_SOCIAL_RESPONSE
+    if identity_question:
+        return _CREATOR_IDENTITY_RESPONSE
+    if creator_reference and any(
+        phrase in normalized
+        for phrase in ("who is", "tell me about", "information", "background", "what does")
+    ):
+        return _CREATOR_PROFILE_RESPONSE
+    return None
+
 
 class ConversationAIError(RuntimeError):
     """Raised when no configured conversational provider can answer."""
@@ -276,7 +362,7 @@ class ConversationAI:
         providers: Sequence[ChatProvider] | None = None,
     ) -> None:
         base_prompt = system_prompt.strip() or "You are RoboBuddy, a friendly educational AI companion robot."
-        self._system_prompt = f"{base_prompt}\n\n{_CORE_BEHAVIOR}"
+        self._system_prompt = f"{base_prompt}\n\n{_CORE_BEHAVIOR}\n\n{_CREATOR_CONTEXT}"
         self._max_output_tokens = max(64, max_output_tokens)
         self._history_turns = max(1, history_turns)
         self._messages: list[dict[str, str]] = []
@@ -367,6 +453,11 @@ class ConversationAI:
         if not cleaned_user_text:
             raise ValueError("The user message is empty.")
 
+        local_response = creator_response(cleaned_user_text)
+        if local_response is not None:
+            self._commit_turn(cleaned_user_text, local_response)
+            return local_response
+
         # Do not mutate stored history until a provider returns successfully.
         request_messages = [*self._messages, {"role": "user", "content": cleaned_user_text}]
         failures: list[str] = []
@@ -391,16 +482,19 @@ class ConversationAI:
             if self._providers[0] is not provider:
                 self._providers.remove(provider)
                 self._providers.insert(0, provider)
-            self._messages.extend(
-                [
-                    {"role": "user", "content": cleaned_user_text},
-                    {"role": "assistant", "content": normalized},
-                ]
-            )
-            self._trim_history()
+            self._commit_turn(cleaned_user_text, normalized)
             return normalized
 
         raise ConversationAIError("All AI providers failed. " + " | ".join(failures))
+
+    def _commit_turn(self, user_text: str, response_text: str) -> None:
+        self._messages.extend(
+            [
+                {"role": "user", "content": user_text},
+                {"role": "assistant", "content": response_text},
+            ]
+        )
+        self._trim_history()
 
     def _trim_history(self) -> None:
         max_messages = self._history_turns * 2
