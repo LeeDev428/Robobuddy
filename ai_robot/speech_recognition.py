@@ -3,6 +3,7 @@ import os
 import audioop
 
 import speech_recognition as sr
+import torch
 import whisper
 
 
@@ -15,8 +16,11 @@ class WhisperSpeechRecognizer:
         self._recognizer.pause_threshold = 1.0
         self._recognizer.non_speaking_duration = 0.5
         self._recognizer.phrase_threshold = 0.2
-        self._model = whisper.load_model(model_name)
+        self._device = "cuda" if torch.cuda.is_available() else "cpu"
+        self._use_fp16 = self._device == "cuda"
+        self._model = whisper.load_model(model_name, device=self._device)
         self._calibrated = False
+        print(f"[STT] Whisper '{model_name}' loaded on {self._device.upper()}.")
 
     @staticmethod
     def _is_valid_text(text: str) -> bool:
@@ -43,8 +47,8 @@ class WhisperSpeechRecognizer:
             if not self._calibrated:
                 # Calibrate only once for faster turn-by-turn responsiveness.
                 self._recognizer.adjust_for_ambient_noise(source, duration=0.6)
+                self._recognizer.energy_threshold = max(260, self._recognizer.energy_threshold * 1.15)
                 self._calibrated = True
-            self._recognizer.energy_threshold = max(260, self._recognizer.energy_threshold * 1.15)
             audio = self._recognizer.listen(
                 source,
                 timeout=timeout_sec,
@@ -65,7 +69,7 @@ class WhisperSpeechRecognizer:
             result = self._model.transcribe(
                 tmp_path,
                 language="en",
-                fp16=False,
+                fp16=self._use_fp16,
                 temperature=0.0,
                 condition_on_previous_text=False,
                 no_speech_threshold=0.65,
