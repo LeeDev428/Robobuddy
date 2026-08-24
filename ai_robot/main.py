@@ -1,5 +1,6 @@
 import argparse
 import random
+import sys
 import threading
 import time
 
@@ -95,6 +96,11 @@ def speak_with_random_gestures(tts: TextToSpeech, robot: RobotController | None,
 
 
 def run() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(errors="replace")
+
     args = parse_args()
     settings = load_settings()
 
