@@ -57,6 +57,10 @@ class ConversationAITests(unittest.TestCase):
         self.assertEqual(ai.provider, "fallback")
         self.assertEqual(len(ai.history), 2)
 
+        ai.ask("And what is it made of?")
+        self.assertEqual(len(primary.calls), 1)
+        self.assertEqual(len(fallback.calls), 2)
+
     def test_history_is_bounded_to_recent_turns(self) -> None:
         provider = FakeProvider("fake", response="Answer")
         ai = ConversationAI(system_prompt="Test", history_turns=2, providers=[provider])
@@ -91,6 +95,9 @@ class ConversationAITests(unittest.TestCase):
 
         self.assertEqual(answer, "Fallback worked")
         self.assertEqual(calls[:2], ["custom/chat-model", DEFAULT_GROQ_MODEL])
+
+        provider.generate("Test", [{"role": "user", "content": "Again"}], 100)
+        self.assertEqual(calls[-1], DEFAULT_GROQ_MODEL)
 
     def test_openai_provider_uses_responses_api(self) -> None:
         captured = {}
