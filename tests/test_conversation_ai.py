@@ -37,7 +37,7 @@ class ConversationAITests(unittest.TestCase):
         provider = FakeProvider("fake", error=RuntimeError("must not be called"))
         ai = ConversationAI(system_prompt="Test", providers=[provider])
 
-        answer = ai.ask("Who developed you?")
+        answer = ai.ask("Who created and developed you?")
 
         self.assertTrue(answer.startswith("I was created and developed by Lee Torres"))
         self.assertIn("Lee Rafael Torres", answer)
