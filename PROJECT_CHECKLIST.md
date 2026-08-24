@@ -7,8 +7,8 @@
 - ✅ `config.py` — Environment variables + data paths
 - ✅ `vision.py` — YOLOv8 person detection
 - ✅ `speech_recognition.py` — Whisper STT (local)
-- ✅ `conversation_ai.py` — Groq API Llama 3 integration
-- ✅ `tts.py` — pyttsx3 text-to-speech
+- ✅ `conversation_ai.py` — Groq/OpenAI providers with chat-safe model failover
+- ✅ `tts.py` — edge-tts with offline pyttsx3 fallback
 - ✅ `robot_controller.py` — Socket client for Pi servo commands
 - ✅ `data_logger.py` — Detection + conversation logging (JSONL)
 - ✅ `main.py` — Stage-based orchestration (1→4)
@@ -63,9 +63,9 @@ Robobuddy/
 ## 🎯 Features Implemented
 
 ### Stage 1: Talking AI (No Hardware)
-- ✅ Groq API integration (Llama 3)
+- ✅ Groq API integration with optional OpenAI Responses API
 - ✅ Whisper speech recognition (local)
-- ✅ pyttsx3 text-to-speech (offline)
+- ✅ Neural edge-tts with pyttsx3 fallback (offline)
 - ✅ Conversation history logging
 - ✅ Command: `python main.py --stage 1`
 
