@@ -8,14 +8,30 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
 
+def _api_key(name: str) -> str:
+    """Treat common template placeholders as missing credentials."""
+    value = os.getenv(name, "").strip()
+    if value.lower().startswith(("your_", "replace_", "changeme")):
+        return ""
+    return value
+
+
 @dataclass
 class Settings:
     """Runtime settings loaded from environment variables."""
 
-    groq_api_key: str = os.getenv("GROQ_API_KEY", "")
+    ai_provider: str = os.getenv("AI_PROVIDER", "auto").strip().lower()
+    groq_api_key: str = _api_key("GROQ_API_KEY")
+    groq_model: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b").strip()
+    openai_api_key: str = _api_key("OPENAI_API_KEY")
+    openai_model: str = os.getenv("OPENAI_MODEL", "gpt-5.6-terra").strip()
+    ai_timeout_sec: float = float(os.getenv("AI_TIMEOUT_SEC", "20"))
+    ai_retries: int = int(os.getenv("AI_RETRIES", "2"))
+    ai_max_output_tokens: int = int(os.getenv("AI_MAX_OUTPUT_TOKENS", "240"))
+    conversation_turns: int = int(os.getenv("CONVERSATION_TURNS", "8"))
     system_prompt: str = os.getenv(
         "SYSTEM_PROMPT",
-        "You are RoboBuddy, a friendly educational AI companion robot.",
+        "You are RoboBuddy, a warm and capable educational AI companion robot.",
     )
 
     whisper_model: str = os.getenv("WHISPER_MODEL", "base.en")
