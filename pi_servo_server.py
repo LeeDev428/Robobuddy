@@ -80,9 +80,9 @@ class ServoController:
         return int(self.MIN_PULSE_US + (angle / 180.0) * pulse_range)
 
     def _pulse_to_pwm(self, pulse_us: int) -> int:
-        """Convert pulse width (µs) to PCA9685 PWM value (0–4095)."""
+        """Convert pulse width (µs) to Adafruit's 16-bit duty-cycle value."""
         cycle_time_us = 1_000_000 / self.FREQUENCY
-        return int((pulse_us / cycle_time_us) * 4096)
+        return int((pulse_us / cycle_time_us) * 0xFFFF)
 
     def set_servo_position(self, channel: int, angle: int, duration_ms: int = 500) -> None:
         """
@@ -221,13 +221,20 @@ class RoboBuddyServer:
                     client_socket, client_addr = server_socket.accept()
                     print(f"[CONNECT] Client {client_addr}")
 
+                    receive_buffer = b""
                     while True:
-                        data = client_socket.recv(1024).decode("utf-8")
+                        data = client_socket.recv(1024)
                         if not data:
                             break
-                        for line in data.strip().split("\n"):
-                            if line:
-                                self.handle_command(line)
+                        receive_buffer += data
+                        while b"\n" in receive_buffer:
+                            line, receive_buffer = receive_buffer.split(b"\n", 1)
+                            command = line.decode("utf-8", errors="replace").strip()
+                            if command:
+                                self.handle_command(command)
+                    final_command = receive_buffer.decode("utf-8", errors="replace").strip()
+                    if final_command:
+                        self.handle_command(final_command)
                 except KeyboardInterrupt:
                     break
                 except Exception as e:
