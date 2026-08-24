@@ -98,6 +98,23 @@ def run() -> None:
     args = parse_args()
     settings = load_settings()
 
+    try:
+        ai = ConversationAI(
+            api_key=settings.groq_api_key,
+            system_prompt=settings.system_prompt,
+            provider=settings.ai_provider,
+            groq_model=settings.groq_model,
+            openai_api_key=settings.openai_api_key,
+            openai_model=settings.openai_model,
+            timeout_sec=settings.ai_timeout_sec,
+            retries=settings.ai_retries,
+            max_output_tokens=settings.ai_max_output_tokens,
+            history_turns=settings.conversation_turns,
+        )
+    except ValueError as exc:
+        print(f"[FATAL] AI configuration error: {exc}")
+        return
+
     tts = TextToSpeech(
         voice=settings.tts_voice,
         volume=settings.tts_volume,
@@ -105,18 +122,6 @@ def run() -> None:
         pitch=settings.tts_pitch_hz,
     )
     stt = WhisperSpeechRecognizer(model_name=settings.whisper_model)
-    ai = ConversationAI(
-        api_key=settings.groq_api_key,
-        system_prompt=settings.system_prompt,
-        provider=settings.ai_provider,
-        groq_model=settings.groq_model,
-        openai_api_key=settings.openai_api_key,
-        openai_model=settings.openai_model,
-        timeout_sec=settings.ai_timeout_sec,
-        retries=settings.ai_retries,
-        max_output_tokens=settings.ai_max_output_tokens,
-        history_turns=settings.conversation_turns,
-    )
     logger = DataLogger()
 
     detector = None
