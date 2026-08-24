@@ -1,4 +1,5 @@
 import random
+import re
 import time
 from collections.abc import Callable, Sequence
 from typing import Any, Protocol
@@ -85,7 +86,8 @@ _CREATOR_SOCIAL_RESPONSE = (
 
 def creator_response(user_text: str) -> str | None:
     """Return authoritative local creator details for clear creator questions."""
-    normalized = " ".join(user_text.lower().replace("'", " ").split())
+    normalized = " ".join(re.sub(r"[^a-z0-9\s]", " ", user_text.lower()).split())
+    words = set(normalized.split())
     creator_reference = any(
         marker in normalized
         for marker in (
@@ -98,7 +100,11 @@ def creator_response(user_text: str) -> str | None:
             "developer of robobuddy",
         )
     )
-    identity_question = any(
+    identity_question = (
+        "who" in words
+        and bool(words.intersection({"create", "created", "develop", "developed", "build", "built", "made", "programmed"}))
+        and bool(words.intersection({"you", "robobuddy"}))
+    ) or any(
         phrase in normalized
         for phrase in (
             "who created you",
